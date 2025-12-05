@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Status Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+        }
+        
+        .header {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            color: #4ecca3;
+            margin-bottom: 10px;
+        }
+        
+        .last-update {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card h3 {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #4ecca3;
+        }
+        
+        .aircraft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+        }
+        
+        .aircraft-card {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-left: 5px solid #4ecca3;
+        }
+        
+        .aircraft-card.in-use {
+            border-left-color: #ff6b6b;
+        }
+        
+        .aircraft-card.available {
+            border-left-color: #4ecca3;
+        }
+        
+        .aircraft-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a4e;
+        }
+        
+        .aircraft-tail {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .aircraft-type {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.available {
+            background: #4ecca3;
+            color: #1a1a2e;
+        }
+        
+        .status-badge.in-use {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        
+        .operation-info {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .operation-info strong {
+            color: #fff;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            color: #aaa;
+        }
+        
+        .info-value {
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #4ecca3;
+        }
+        
+        .error {
+            background: #ff6b6b;
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Aircraft Status Dashboard</h1>
+        <div class="last-update">Loading...</div>
+    </div>
+    
+    <div class="stats" id="stats">
+        <div class="stat-card">
+            <h3>Total Aircraft</h3>
+            <div class="value" id="total-aircraft">-</div>
+        </div>
+        <div class="stat-card">
+            <h3>Available</h3>
+            <div class="value" id="available-aircraft">-</div>
+        </div>
+        <div class="stat-card">
+            <h3>In Use</h3>
+            <div class="value" id="in-use-aircraft">-</div>
+        </div>
+    </div>
+    
+    <div class="aircraft-grid" id="aircraft-grid">
+        <div class="loading">Loading aircraft status...</div>
+    </div>
+
+    <script>
+        const REFRESH_INTERVAL = <?php require 'config.php'; echo REFRESH_INTERVAL * 1000; ?>;
+        
+        async function loadDashboard() {
+            try {
+                const response = await fetch('dashboard_api.php');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                updateStats(data.stats);
+                updateAircraftGrid(data.aircraft);
+                updateTimestamp();
+                
+            } catch (error) {
+                showError('Failed to load dashboard data: ' + error.message);
+            }
+        }
+        
+        function updateStats(stats) {
+            document.getElementById('total-aircraft').textContent = stats.total;
+            document.getElementById('available-aircraft').textContent = stats.available;
+            document.getElementById('in-use-aircraft').textContent = stats.in_use;
+        }
+        
+        function updateAircraftGrid(aircraft) {
+            const grid = document.getElementById('aircraft-grid');
+            
+            if (aircraft.length === 0) {
+                grid.innerHTML = '<div class="loading">No aircraft found</div>';
+                return;
+            }
+            
+            grid.innerHTML = aircraft.map(ac => createAircraftCard(ac)).join('');
+        }
+        
+        function createAircraftCard(ac) {
+            const statusClass = ac.is_available ? 'available' : 'in-use';
+            const statusText = ac.is_available ? 'Available' : 'In Use';
+            
+            let operationInfo = '';
+            if (ac.current_operation) {
+                const op = ac.current_operation;
+                operationInfo = `
+                    <div class="operation-info">
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">${op.status}</span>
+                        </div>
+                        ${op.instructor ? `
+                        <div class="info-row">
+                            <span class="info-label">Instructor:</span>
+                            <span class="info-value">${op.instructor}</span>
+                        </div>
+                        ` : ''}
+                        ${op.student1 ? `
+                        <div class="info-row">
+                            <span class="info-label">Student:</span>
+                            <span class="info-value">${op.student1}</span>
+                        </div>
+                        ` : ''}
+                        ${op.start_time ? `
+                        <div class="info-row">
+                            <span class="info-label">Start:</span>
+                            <span class="info-value">${formatTime(op.start_time)}</span>
+                        </div>
+                        ` : ''}
+                        ${op.due_back ? `
+                        <div class="info-row">
+                            <span class="info-label">Due Back:</span>
+                            <span class="info-value">${formatTime(op.due_back)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                operationInfo = '<div class="operation-info">No scheduled operations</div>';
+            }
+            
+            return `
+                <div class="aircraft-card ${statusClass}">
+                    <div class="aircraft-header">
+                        <div>
+                            <div class="aircraft-tail">${ac.aircraft.tail_number}</div>
+                            <div class="aircraft-type">${ac.aircraft.type}</div>
+                        </div>
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                    </div>
+                    ${operationInfo}
+                </div>
+            `;
+        }
+        
+        function formatTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+        
+        function updateTimestamp() {
+            const now = new Date();
+            document.querySelector('.last-update').textContent = 
+                'Last updated: ' + now.toLocaleTimeString('en-US');
+        }
+        
+        function showError(message) {
+            const grid = document.getElementById('aircraft-grid');
+            grid.innerHTML = `<div class="error">Error: ${message}</div>`;
+        }
+        
+        // Initial load
+        loadDashboard();
+        
+        // Auto-refresh
+        setInterval(loadDashboard, REFRESH_INTERVAL);
+    </script>
+</body>
+</html>
