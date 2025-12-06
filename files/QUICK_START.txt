@@ -1,0 +1,174 @@
+═══════════════════════════════════════════════════════════════
+   AIRCRAFT STATUS DASHBOARD - QUICK START GUIDE
+═══════════════════════════════════════════════════════════════
+
+📦 WHAT YOU RECEIVED:
+
+1. test_api.php           - API connection diagnostic tool
+2. dashboard.html         - Main aircraft status dashboard  
+3. dashboard_proxy.php    - Backend data processor
+4. troubleshooting.html   - Interactive troubleshooting guide
+5. README.txt             - Detailed documentation
+
+═══════════════════════════════════════════════════════════════
+🚀 QUICK START (5 Minutes)
+═══════════════════════════════════════════════════════════════
+
+STEP 1: CONFIGURE (2 minutes)
+─────────────────────────────
+Open: dashboard_proxy.php
+
+Find these lines (around line 6-10) and update:
+
+$API_URL = 'https://yourdomain.com/etaws/apipost.php';
+$CUSTOMER_CODE = 'your_customer_code';
+$ACCESS_CODE = 'your_access_code';
+$USERNAME = 'your_username';
+$LOCATION = 'Your Location';
+
+Replace with YOUR actual Talon credentials!
+
+STEP 2: UPLOAD (1 minute)
+──────────────────────────
+Upload ALL files to your web server:
+- test_api.php
+- dashboard.html
+- dashboard_proxy.php
+
+STEP 3: TEST (1 minute)
+───────────────────────
+Navigate to: http://yourserver.com/test_api.php
+
+1. Enter your credentials in the form
+2. Click "Test Aircraft Data" → Should see aircraft XML
+3. Click "Test Operations Data" → Should see operations XML
+
+If both work → Success! Proceed to Step 4
+If not → See TROUBLESHOOTING below
+
+STEP 4: LAUNCH (1 minute)
+──────────────────────────
+Navigate to: http://yourserver.com/dashboard.html
+
+You should see:
+✓ Aircraft cards with status indicators
+✓ Green badges = Available
+✓ Orange badges = In Use (shows crew & flight info)
+✓ Red badges = Down/Obsolete
+✓ Auto-refresh every 30 seconds
+
+═══════════════════════════════════════════════════════════════
+🎯 WHAT THE DASHBOARD SHOWS
+═══════════════════════════════════════════════════════════════
+
+TOP BAR:
+- Last Updated: Timestamp of last data refresh
+- Auto-refresh: Refresh interval (30s default)
+- Total Aircraft: Count of all active aircraft
+- Available: Aircraft ready for use
+- In Use: Aircraft currently on flights
+
+AIRCRAFT CARDS:
+- Aircraft Name (e.g., "Cessna 172 - N12345")
+- Status Badge (Available / In Use / Down)
+- Type, N-Number, Tach, Hobbs
+- Current Flight Info (if in use):
+  * Instructor name
+  * Student name  
+  * Start time
+  * Due back time
+  * Flight status
+
+═══════════════════════════════════════════════════════════════
+⚠️ QUICK TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+PROBLEM: Dashboard stuck on "Loading..."
+SOLUTION: 
+  1. Press F12 in browser → Check Console for errors
+  2. Test proxy directly: http://yourserver.com/dashboard_proxy.php
+     (Should return JSON data)
+  3. Verify credentials in dashboard_proxy.php
+
+PROBLEM: "No response received" in test_api.php
+SOLUTION:
+  1. Verify API_URL is correct
+  2. Check firewall settings (server needs outbound HTTPS)
+  3. Confirm credentials are correct
+  4. Check server error logs
+
+PROBLEM: Aircraft show but no operations
+SOLUTION:
+  1. Verify LOCATION matches Talon exactly (case-sensitive!)
+  2. Check if you have flights scheduled TODAY
+  3. Try different date range in dashboard_proxy.php
+
+PROBLEM: "XML Parsing Failed"
+SOLUTION:
+  1. API returning error instead of XML
+  2. Check raw response in test_api.php
+  3. Verify ALL credentials
+  4. Contact Talon support
+
+For detailed troubleshooting:
+→ Open troubleshooting.html in browser
+→ Interactive checklist with solutions
+
+═══════════════════════════════════════════════════════════════
+🔧 CUSTOMIZATION
+═══════════════════════════════════════════════════════════════
+
+CHANGE REFRESH RATE:
+In dashboard.html, find (near end):
+  refreshInterval = setInterval(fetchDashboardData, 30000);
+Change 30000 to milliseconds you want (60000 = 1 minute)
+
+FILTER SPECIFIC AIRCRAFT TYPES:
+In dashboard_proxy.php, add to $aircraft_params:
+  'resourcetype' => 'C-172'
+
+CHANGE OPERATIONS TIME WINDOW:
+In dashboard_proxy.php:
+  'startdatetime' => $today . ' 0600',  // 6 AM
+  'stopdatetime' => $today . ' 2200',   // 10 PM
+
+═══════════════════════════════════════════════════════════════
+✅ SUCCESS CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+□ Files uploaded to web server
+□ dashboard_proxy.php configured with credentials
+□ test_api.php shows aircraft data
+□ test_api.php shows operations data  
+□ dashboard_proxy.php returns JSON
+□ dashboard.html displays aircraft cards
+□ Status updates automatically
+□ In-use aircraft show crew information
+
+═══════════════════════════════════════════════════════════════
+📋 NEXT STEPS
+═══════════════════════════════════════════════════════════════
+
+Once working:
+1. Bookmark the dashboard URL
+2. Display on office monitor/TV
+3. Share URL with dispatch/scheduling team
+4. Customize refresh rate if needed
+5. Add filtering if you have large fleet
+
+═══════════════════════════════════════════════════════════════
+🆘 NEED HELP?
+═══════════════════════════════════════════════════════════════
+
+1. Check troubleshooting.html for interactive guide
+2. Review README.txt for detailed documentation
+3. Test each component separately with test_api.php
+4. Check browser console (F12) for JavaScript errors
+5. Check server PHP error logs for backend issues
+
+═══════════════════════════════════════════════════════════════
+
+The dashboard should now be fully functional with live data from
+your Talon ETA system, refreshing automatically every 30 seconds!
+
+Good luck! 🛩️
