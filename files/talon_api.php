@@ -16,9 +16,9 @@ require_once 'config.php';
 function callTalonAPI($opstype, $params = []) {
     // Build base parameters
     $apiParams = [
-        'customercode' => CUSTOMER_CODE,
-        'accesscode' => ACCESS_CODE,
-        'username' => USERNAME,
+        'customercode' => 749A55FB62C55F87174E085ED4D4E9CC,
+        'accesscode' => flightline,
+        'username' => asavka,
         'operation' => 'export',
         'opstype' => $opstype
     ];
